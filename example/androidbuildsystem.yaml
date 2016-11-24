@@ -1,0 +1,7 @@
+---
+compile:
+    before:                 # Scripts to run before compilation
+    - echo "thing"
+    after:                  # Scripts to run after compilation
+    - echo "thing"
+target: android-7
