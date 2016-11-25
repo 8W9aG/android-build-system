@@ -33,6 +33,11 @@ android_manifest_contents = """<?xml version="1.0" encoding="utf-8"?>
     </application>
 
 </manifest>"""
+android_strings_xml = """<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="myApplicationName">Android Test Program</string>
+    <string name="helloText">Hello, world!</string>
+</resources>"""
 android_manifest_file = 'AndroidManifest.xml'
 
 
@@ -387,9 +392,12 @@ def _main():
         if not os.path.exists(full_check_directory):
             os.makedirs(full_check_directory)
     manifest_file = os.path.join(args.directory, android_manifest_file)
+    strings_xml_file = os.path.join(os.path.join(os.path.join(args.directory, 'res'), 'values'), 'strings.xml')
     if args.init:
         if not os.path.exists(manifest_file):
             open(manifest_file, 'w').write(android_manifest_contents)
+        if not os.path.exists(strings_xml_file):
+            open(strings_xml_file, 'w').write(android_strings_xml)
         print 'Successfully initialised the required build directories'
         return 0
     if not os.path.exists(android_manifest_file):
