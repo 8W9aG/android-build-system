@@ -6,6 +6,7 @@ import os
 import yaml
 import sys
 import subprocess
+import shutil
 
 
 android_manifest_contents = """<?xml version="1.0" encoding="utf-8"?>
@@ -170,6 +171,10 @@ def _compile(args, compile_options):
                       check_target +
                       '\n' +
                       targets)
+    # Remove the classes directory
+    obj_directory = os.path.join(args.directory, 'obj')
+    shutil.rmtree(obj_directory)
+    os.makedirs(obj_directory)
     # Create R.java
     print 'Creating R.java...'
     build_tools_folder = os.path.join(args.android, 'build-tools')
