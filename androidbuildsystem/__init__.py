@@ -87,6 +87,20 @@ def _parseTargets(targets):
     return parsed_targets
 
 
+def _parseVirtualDevices(virtual_devices):
+    parsed_virtual_devices = []
+    dash_splits = virtual_devices.split('---------');
+    for dash_split in dash_splits:
+        line_split = dash_split.split('\n')
+        if line_split[0] == 'Available Android Virtual Devices:':
+            line_split = line_split[1:]
+        for line in line_split:
+            line_strip = line.strip()
+            if 'Name:' in line_strip:
+                parsed_virtual_devices.append(line_strip.split(':')[-1].strip())
+    return parsed_virtual_devices
+
+
 def _compile(args, compile_options):
     # Execute the before scripts
     for before_script in compile_options['before']:
@@ -247,6 +261,52 @@ def _sign(args, sign_options, unsigned_apk_file, build_tools_target_folder):
     # Execute the after scripts
     for after_script in sign_options['after']:
         subprocess.call(after_script, shell=True)
+    return zipalign_file
+
+
+def _install(args, install_options, profiles, apk_file):
+    # Execute the before scripts
+    for before_script in install_options['before']:
+        subprocess.call(before_script, shell=True)
+    print 'Checking virtual devices...'
+    tools_directory = os.path.join(args.android, 'tools')
+    android_tools_program = os.path.join(tools_directory, 'android')
+    virtual_devices_output = subprocess.check_output(['android', 'list', 'avd'], cwd=tools_directory)
+    virtual_devices = _parseVirtualDevices(virtual_devices_output)
+    final_profile = None
+    for profile in profiles:
+        if profile['name'] == install_options['profile']:
+            final_profile = profile
+            break
+    if install_options['profile'] not in virtual_devices:
+        # Create the virtual device
+        if final_profile == None:
+            _printAndExit('Could not find a profile to install the app onto')
+        if final_profile['type'] == 'emulator':
+            result = subprocess.call([android_tools_program,
+                '--verbose',
+                'create', 'avd',
+                '--name', final_profile['name'],
+                '--target', final_profile['target'],
+                '--sdcard', final_profile['sdcard'],
+                '--abi', final_profile['abi']])
+        if result != 0:
+            _printAndExit('Failed to create virtual device')
+    # Install
+    print 'Installing the app...'
+    platform_tools_directory = os.path.join(args.android, 'platform-tools')
+    adb_program = os.path.join(platform_tools_directory, 'adb')
+    device_type = '-e'
+    if final_profile['type'] == 'device':
+        device_type = '-d'
+    result = subprocess.call([adb_program,
+        device_type,
+        apk_file])
+    if result != 0:
+        _printAndExit('Failed to install the APK')
+    # Execute the after scripts
+    for after_script in install_options['after']:
+        subprocess.call(after_script, shell=True)
 
 
 def _main():
@@ -336,9 +396,15 @@ def _main():
         _printAndExit('Could not find ' + android_manifest_file + ' in the build directory')
     if args.target != None:
         build_config['compile']['target'] = args.target
-    build_tools_target_folder = _compile(args, build_config['compile'])
-    unsigned_apk_file = _package(args, build_config['package'], build_tools_target_folder, build_config['compile']['target'])
-    _sign(args, build_config['sign'], unsigned_apk_file, build_tools_target_folder)
+    if 'compile' in build_config:
+        build_tools_target_folder = _compile(args, build_config['compile'])
+        if 'package' in build_config:
+            unsigned_apk_file = _package(args, build_config['package'], build_tools_target_folder, build_config['compile']['target'])
+            if 'sign' in build_config:
+                apk_file = _sign(args, build_config['sign'], unsigned_apk_file, build_tools_target_folder)
+                if 'install' in build_config:
+                    _install(args, build_config['install'], build_config['profiles'], apk_file)
+    print 'Build completed'
 
 
 if __name__ == "__main__":

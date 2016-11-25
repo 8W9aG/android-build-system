@@ -26,7 +26,17 @@ sign:
     - echo "Before signing custom script executed"
     after:
     - echo "After signing custom script executed"
+install:
+    before:
+    - echo "Before installing custom script executed"
+    after:
+    - echo "After installing custom script executed"
+    profile: MySonyEricsson
 profiles:
-    - name: Nexus_5X_API_24
-      target: android-24
-      sdcard: 1025
+    - name: MySonyEricsson
+      target: android-23
+      sdcard: 1024M
+      abi: default/x86_64
+      type: emulator
+    - name: Device
+      type: device
