@@ -1,7 +1,11 @@
 ---
 compile:
-    before:                 # Scripts to run before compilation
-    - echo "thing"
-    after:                  # Scripts to run after compilation
-    - echo "thing"
-target: android-7
+    target: android-23
+    before:
+    - echo "Before compiling custom script executed"
+    after:
+    - echo "After compiling custom script executed"
+profiles:
+    - name: Nexus_5X_API_24
+      target: android-24
+      sdcard: 1025

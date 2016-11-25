@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.mycompany.package1"
+      package="com.example.test"
       android:versionCode="1"
       android:versionName="1.0">
 
@@ -12,7 +12,7 @@
 
     <application android:icon="@drawable/mylogo"
                  android:label="@string/myApplicationName">
-        <activity android:name="com.mycompany.package1.HelloAndroid"
+        <activity android:name="com.example.test.HelloAndroid"
                   android:label="@string/myApplicationName">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
