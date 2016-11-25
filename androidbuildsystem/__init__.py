@@ -42,11 +42,25 @@ android_manifest_file = 'AndroidManifest.xml'
 
 
 def _printAndExit(print_string):
+    """
+    Prints a message and exits with an error value.
+
+    Args:
+    print_string: The string to print to the console.
+    """
     print print_string
     sys.exit(1)
 
 
 def _parseTargets(targets):
+    """
+    Parses the targets output by the android SDK into a dictionary.
+
+    Args:
+    targets: The string output of the android SDK.
+    Returns:
+    Dictionaries containing information about the targets.
+    """
     parsed_targets = []
     dash_splits = targets.split('----------');
     for dash_split in dash_splits:
@@ -93,6 +107,14 @@ def _parseTargets(targets):
 
 
 def _parseVirtualDevices(virtual_devices):
+    """
+    Parses the virtual devices output by the android SDK into names.
+
+    Args:
+    targets: The string output of the android SDK.
+    Returns:
+    Strings containing the names of the virtual devices.
+    """
     parsed_virtual_devices = []
     dash_splits = virtual_devices.split('---------');
     for dash_split in dash_splits:
@@ -107,6 +129,15 @@ def _parseVirtualDevices(virtual_devices):
 
 
 def _compile(args, compile_options):
+    """
+    Performs the compile steps to create java bytecode.
+
+    Args:
+    args: The arguments given to the main function.
+    compile_options: The build configuration options for compiling
+    Returns:
+    A string with the absolute path to the build tools folder
+    """
     # Execute the before scripts
     for before_script in compile_options['before']:
         subprocess.call(before_script, shell=True)
@@ -187,6 +218,16 @@ def _compile(args, compile_options):
 
 
 def _package(args, package_options, build_tools_target_folder, target):
+    """
+    Performs the package steps to create an unsigned APK.
+
+    Args:
+    args: The arguments given to the main function.
+    package_options: The build configuration options for packaging.
+    target: The target to package with.
+    Returns:
+    A string with the absolute path to the unsigned APK file.
+    """
     # Execute the before scripts
     for before_script in package_options['before']:
         subprocess.call(before_script, shell=True)
@@ -219,6 +260,17 @@ def _package(args, package_options, build_tools_target_folder, target):
 
 
 def _sign(args, sign_options, unsigned_apk_file, build_tools_target_folder):
+    """
+    Performs the package steps to create a signed APK.
+
+    Args:
+    args: The arguments given to the main function.
+    sign_options: The build configuration options for signing.
+    unsigned_apk_file: The path to the unsigned APK file.
+    build_tools_target_folder: The build tools target folder.
+    Returns:
+    A string with the absolute path to the zipaligned APK file.
+    """
     # Execute the before scripts
     for before_script in sign_options['before']:
         subprocess.call(before_script, shell=True)
@@ -270,6 +322,15 @@ def _sign(args, sign_options, unsigned_apk_file, build_tools_target_folder):
 
 
 def _install(args, install_options, profiles, apk_file):
+    """
+    Performs the package steps to install an APK.
+
+    Args:
+    args: The arguments given to the main function.
+    install_options: The build configuration options for installing.
+    profiles: A list containing the profiles in our build configuration.
+    apk_file: The signed APK file.
+    """
     # Execute the before scripts
     for before_script in install_options['before']:
         subprocess.call(before_script, shell=True)
