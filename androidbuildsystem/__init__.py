@@ -93,9 +93,7 @@ def _compile(args, compile_options):
         subprocess.call(before_script, shell=True)
     # Find a list of targets
     print 'Checking target validity...'
-    check_target = args.target
-    if check_target == None:
-        check_target = compile_options['target']
+    check_target = compile_options['target']
     tools_directory = os.path.join(args.android, 'tools')
     android_tools_program = os.path.join(tools_directory, 'android')
     targets = subprocess.check_output(['android', 'list', 'target'], cwd=tools_directory)
@@ -165,6 +163,33 @@ def _compile(args, compile_options):
         _printAndExit('Failed to create DEX')
     # Execute the after scripts
     for after_script in compile_options['after']:
+        subprocess.call(after_script, shell=True)
+    return build_tools_target_folder
+
+
+def _package(args, package_options, build_tools_target_folder, target):
+    # Execute the before scripts
+    for before_script in package_options['before']:
+        subprocess.call(before_script, shell=True)
+    print 'Packaging APK...'
+    aapt_program = os.path.join(build_tools_target_folder, 'aapt')
+    manifest_file = os.path.join(args.directory, android_manifest_file)
+    res_directory = os.path.join(args.directory, 'res')
+    android_jar_file = os.path.join(os.path.join(os.path.join(args.android, 'platforms'), target), 'android.jar')
+    bin_directory = os.path.join(args.directory, 'bin')
+    unsigned_apk_file = os.path.join(os.path.join(args.directory, bin_directory), package_options['name'] + '.unsigned.apk')
+    result = subprocess.check_call([aapt_program,
+        'package',
+        '-f',
+        '-M', manifest_file,
+        '-S', res_directory,
+        '-I', android_jar_file,
+        '-F', unsigned_apk_file,
+        bin_directory])
+    if result != 0:
+        _printAndExit('Failed to package APK')
+    # Execute the after scripts
+    for after_script in package_options['after']:
         subprocess.call(after_script, shell=True)
 
 
@@ -253,7 +278,10 @@ def _main():
         return 0
     if not os.path.exists(android_manifest_file):
         _printAndExit('Could not find ' + android_manifest_file + ' in the build directory')
-    _compile(args, build_config['compile'])
+    if args.target != None:
+        build_config['compile']['target'] = args.target
+    build_tools_target_folder = _compile(args, build_config['compile'])
+    _package(args, build_config['package'], build_tools_target_folder, build_config['compile']['target'])
 
 
 if __name__ == "__main__":

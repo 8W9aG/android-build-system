@@ -5,6 +5,12 @@ compile:
     - echo "Before compiling custom script executed"
     after:
     - echo "After compiling custom script executed"
+package:
+    name: AndroidTest
+    before:
+    - echo "Before packaging custom script executed"
+    after:
+    - echo "After packaging custom script executed"
 profiles:
     - name: Nexus_5X_API_24
       target: android-24
