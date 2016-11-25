@@ -11,6 +11,21 @@ package:
     - echo "Before packaging custom script executed"
     after:
     - echo "After packaging custom script executed"
+sign:
+    keystore:
+        company_name: Example Org
+        organisational_unit: Organisation
+        organisation: Org
+        location: New York
+        state: New York
+        country: USA
+    storepass: exampletest
+    keypass: exampletest
+    key_alias: AndroidTestKey
+    before:
+    - echo "Before signing custom script executed"
+    after:
+    - echo "After signing custom script executed"
 profiles:
     - name: Nexus_5X_API_24
       target: android-24

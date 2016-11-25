@@ -2,3 +2,4 @@
 /example/doc
 /example/obj
 R.java
+*.keystore

@@ -172,13 +172,18 @@ def _package(args, package_options, build_tools_target_folder, target):
     for before_script in package_options['before']:
         subprocess.call(before_script, shell=True)
     print 'Packaging APK...'
+    # Remove the apks in the bin folder
+    bin_directory = os.path.join(args.directory, 'bin')
+    for bin_file in os.listdir(bin_directory):
+        if bin_file.split('.')[-1] == 'apk':
+            os.remove(os.path.join(bin_directory, bin_file))
+    # Package the APK
     aapt_program = os.path.join(build_tools_target_folder, 'aapt')
     manifest_file = os.path.join(args.directory, android_manifest_file)
     res_directory = os.path.join(args.directory, 'res')
     android_jar_file = os.path.join(os.path.join(os.path.join(args.android, 'platforms'), target), 'android.jar')
-    bin_directory = os.path.join(args.directory, 'bin')
     unsigned_apk_file = os.path.join(os.path.join(args.directory, bin_directory), package_options['name'] + '.unsigned.apk')
-    result = subprocess.check_call([aapt_program,
+    result = subprocess.call([aapt_program,
         'package',
         '-f',
         '-M', manifest_file,
@@ -190,6 +195,57 @@ def _package(args, package_options, build_tools_target_folder, target):
         _printAndExit('Failed to package APK')
     # Execute the after scripts
     for after_script in package_options['after']:
+        subprocess.call(after_script, shell=True)
+    return unsigned_apk_file
+
+
+def _sign(args, sign_options, unsigned_apk_file, build_tools_target_folder):
+    # Execute the before scripts
+    for before_script in sign_options['before']:
+        subprocess.call(before_script, shell=True)
+    # Check if we have a keystore
+    keystore = sign_options['keystore']
+    keystore_file = os.path.join(args.directory, 'key.keystore')
+    if not os.path.exists(keystore_file):
+        print 'Creating a keystore...'
+        keytool_program = os.path.join(args.java, 'bin/keytool')
+        key_parameters = 'CN=' + keystore['company_name'] + ',\n'
+        key_parameters += 'OU=' + keystore['organisational_unit'] + ',\n'
+        key_parameters += 'O=' + keystore['organisation'] + ',\n'
+        key_parameters += 'L=' + keystore['location'] + ',\n'
+        key_parameters += 'S=' + keystore['state'] + ',\n'
+        key_parameters += 'C=' + keystore['country']
+        result = subprocess.check_call([keytool_program,
+            '-genkeypair',
+            '-validity', '1000',
+            '-dname', key_parameters,
+            '-keystore', keystore_file,
+            '-storepass', sign_options['storepass'],
+            '-keypass', sign_options['keypass'],
+            '-alias', sign_options['key_alias'],
+            '-keyalg', 'RSA'])
+        if result != 0:
+            _printAndExit('Failed to create keystore')
+    print 'Signing APK...'
+    jarsigner_file = os.path.join(args.java, 'bin/jarsigner')
+    signed_apk_file = unsigned_apk_file.replace('unsigned.apk', 'signed.apk')
+    result = subprocess.check_call([jarsigner_file,
+        '-keystore', keystore_file,
+        '-storepass', sign_options['storepass'],
+        '-keypass', sign_options['keypass'],
+        '-signedjar', signed_apk_file,
+        unsigned_apk_file,
+        sign_options['key_alias']])
+    # Zip align the APK
+    zipalign_file = os.path.join(build_tools_target_folder, 'zipalign')
+    apk_file = signed_apk_file.replace('signed.apk', 'apk')
+    result = subprocess.call([zipalign_file,
+        '-f',
+        '4',
+        signed_apk_file,
+        apk_file])
+    # Execute the after scripts
+    for after_script in sign_options['after']:
         subprocess.call(after_script, shell=True)
 
 
@@ -281,7 +337,8 @@ def _main():
     if args.target != None:
         build_config['compile']['target'] = args.target
     build_tools_target_folder = _compile(args, build_config['compile'])
-    _package(args, build_config['package'], build_tools_target_folder, build_config['compile']['target'])
+    unsigned_apk_file = _package(args, build_config['package'], build_tools_target_folder, build_config['compile']['target'])
+    _sign(args, build_config['sign'], unsigned_apk_file, build_tools_target_folder)
 
 
 if __name__ == "__main__":
