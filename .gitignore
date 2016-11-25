@@ -3,3 +3,5 @@
 /example/obj
 R.java
 *.keystore
+*.egg*
+/build

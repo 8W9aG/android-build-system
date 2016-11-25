@@ -26,12 +26,12 @@ sign:
     - echo "Before signing custom script executed"
     after:
     - echo "After signing custom script executed"
-install:
-    before:
-    - echo "Before installing custom script executed"
-    after:
-    - echo "After installing custom script executed"
-    profile: MySonyEricsson
+#install:
+#    before:
+#    - echo "Before installing custom script executed"
+#    after:
+#    - echo "After installing custom script executed"
+#    profile: MySonyEricsson
 profiles:
     - name: MySonyEricsson
       target: android-23
